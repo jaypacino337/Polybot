@@ -1,0 +1,12 @@
+# Core Polymarket order-signing / CLOB REST client
+py-clob-client>=0.17.0
+
+# Wallet / key generation (also pulled in by py-clob-client, pinned here for the
+# `generate-wallet` helper so it works even before the CLOB client is installed)
+eth-account>=0.11.0
+
+# Config + CLI + HTTP
+python-dotenv>=1.0.0
+PyYAML>=6.0
+click>=8.1.0
+requests>=2.31.0

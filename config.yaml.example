@@ -1,0 +1,49 @@
+# =============================================================================
+#  Polybot trading config.  Copy to `config.yaml` and edit.
+#
+#      cp config.yaml.example config.yaml
+#
+#  Unlike .env (which holds secrets), this file is safe to commit if you want
+#  to keep your strategy in version control. It contains NO private keys.
+# =============================================================================
+
+# How often (seconds) the bot wakes up, evaluates its signal, and (maybe) trades.
+poll_interval_seconds: 30
+
+# The market(s) to trade. Each entry is one binary Polymarket market.
+# `token_id` values are the ERC-1155 token ids for the YES / NO outcomes.
+# Find them via the Polymarket API (see README "Finding a market").
+markets:
+  - name: "example-market"
+    yes_token_id: "REPLACE_WITH_YES_TOKEN_ID"
+    no_token_id: "REPLACE_WITH_NO_TOKEN_ID"
+
+    # --- Long bot: buys the YES outcome when the signal says LONG -----------
+    long:
+      enabled: false          # start/stop this at runtime too (see CLI)
+      order_size_usd: 5.0      # dollars of USDC per entry
+      max_price: 0.95          # never pay more than this per YES share (0-1)
+
+    # --- Short bot: buys the NO outcome when the signal says SHORT ----------
+    short:
+      enabled: false
+      order_size_usd: 5.0
+      max_price: 0.95          # max price per NO share
+
+    # --- Signal: decides LONG / SHORT / FLAT -------------------------------
+    # Swap `type` for any signal registered in polybot/signals/.
+    #   manual         -> you drive it; whatever `decision` says below.
+    #   moving_average -> sample momentum indicator (fast MA vs slow MA).
+    # Later, drop your own indicator in here.
+    signal:
+      type: "moving_average"
+      params:
+        fast: 5                # fast moving-average window (samples)
+        slow: 20               # slow moving-average window (samples)
+        # For type: manual, use instead:
+        # decision: "flat"     # one of: long / short / flat
+
+# Global risk guardrails (applied on top of per-market settings).
+risk:
+  max_open_orders: 10
+  max_daily_orders: 50

@@ -1,0 +1,30 @@
+# ---- SECRETS: never commit these ----
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+wallet.json
+
+# Runtime state / logs
+runtime_state.json
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+build/
+dist/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
