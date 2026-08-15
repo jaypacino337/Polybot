@@ -28,9 +28,12 @@ log = logging.getLogger("polybot.bot")
 class _MarketRuntime:
     cfg: MarketConfig
     signal: Signal
-    # simple local position memory so we don't re-buy the same side every tick
+    # simple local position memory so we don't re-buy the same side every tick,
+    # and so we know how many shares to sell when closing.
     long_open: bool = False
     short_open: bool = False
+    long_shares: float = 0.0
+    short_shares: float = 0.0
 
 
 @dataclass
@@ -94,31 +97,56 @@ class Bot:
             "on" if short_on else "off",
         )
 
+        # --- LONG side: enter on LONG, exit (sell YES) when signal leaves LONG ---
         if long_on and decision == Decision.LONG and not rt.long_open:
-            if self._place(cfg.yes_token_id, yes_price, cfg.long):
+            shares = self._enter(cfg.yes_token_id, yes_price, cfg.long)
+            if shares > 0:
                 rt.long_open = True
-        elif decision != Decision.LONG:
-            rt.long_open = False  # signal left LONG; allow a fresh entry later
+                rt.long_shares = shares
+        elif rt.long_open and decision != Decision.LONG:
+            if self._exit(cfg.yes_token_id, yes_price, rt.long_shares):
+                rt.long_open = False
+                rt.long_shares = 0.0
 
+        # --- SHORT side: enter on SHORT, exit (sell NO) when signal leaves SHORT ---
         if short_on and decision == Decision.SHORT and not rt.short_open:
-            if self._place(cfg.no_token_id, no_price, cfg.short):
+            shares = self._enter(cfg.no_token_id, no_price, cfg.short)
+            if shares > 0:
                 rt.short_open = True
-        elif decision != Decision.SHORT:
-            rt.short_open = False
+                rt.short_shares = shares
+        elif rt.short_open and decision != Decision.SHORT:
+            if self._exit(cfg.no_token_id, no_price, rt.short_shares):
+                rt.short_open = False
+                rt.short_shares = 0.0
 
-    def _place(self, token_id: str, price: float | None, side_cfg) -> bool:
+    def _enter(self, token_id: str, price: float | None, side_cfg) -> float:
+        """Open a position. Returns shares bought (0.0 if nothing happened)."""
         if price is None:
-            log.warning("no price for %s; skipping order", token_id)
-            return False
+            log.warning("no price for %s; skipping entry", token_id)
+            return 0.0
         if price > side_cfg.max_price:
-            log.info("price %.3f > max_price %.3f; skipping", price, side_cfg.max_price)
-            return False
+            log.info("price %.3f > max_price %.3f; skipping entry", price, side_cfg.max_price)
+            return 0.0
         if self._orders_today >= self.config.risk.max_daily_orders:
             log.warning("daily order cap (%d) reached; skipping", self.config.risk.max_daily_orders)
-            return False
+            return 0.0
 
         size_shares = side_cfg.order_size_usd / price  # USDC / price = shares
         result = self.clob.buy(token_id, price, size_shares)
+        if result.success:
+            self._orders_today += 1
+            return size_shares
+        return 0.0
+
+    def _exit(self, token_id: str, price: float | None, shares: float) -> bool:
+        """Close a position by selling `shares`. Returns True if it closed."""
+        if shares <= 0:
+            return True  # nothing to sell; treat as closed
+        if price is None:
+            log.warning("no price for %s; cannot exit yet", token_id)
+            return False
+        log.info("signal flipped; closing position in %s", token_id)
+        result = self.clob.sell(token_id, price, shares)
         if result.success:
             self._orders_today += 1
         return result.success

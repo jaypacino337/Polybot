@@ -116,12 +116,27 @@ Each market has a **signal** that returns `LONG`, `SHORT`, or `FLAT` every tick:
 - `SHORT` → the short bot (if enabled) buys **NO**
 - `FLAT`  → do nothing
 
+When the signal flips **away** from a side, the bot **closes** that position
+(sells the shares it bought) — so the long and short bots both enter *and* exit
+automatically. Turning a bot off stops new entries.
+
 Built-in signals (set `signal.type` in `config.yaml`):
 
-| type             | what it does                                                        |
-|------------------|---------------------------------------------------------------------|
-| `manual`         | you set `decision: long/short/flat`. Great for testing.             |
-| `moving_average` | demo momentum indicator: fast MA vs slow MA crossover.              |
+| type             | params                                   | what it does                                             |
+|------------------|------------------------------------------|----------------------------------------------------------|
+| `manual`         | `decision: long/short/flat`              | you drive it. Great for testing.                         |
+| `threshold`      | `lower`, `upper` (0..1)                   | YES price above `upper` → LONG, below `lower` → SHORT.   |
+| `moving_average` | `fast`, `slow` (windows)                 | fast MA vs slow MA crossover (trend following).          |
+| `momentum`       | `lookback`, `threshold` (fraction)       | price up >threshold → LONG, down → SHORT.                |
+| `rsi`            | `period`, `oversold`, `overbought`, `mode` | RSI mean-reversion (default) or momentum.              |
+
+Example — trade the RSI indicator:
+
+```yaml
+signal:
+  type: rsi
+  params: { period: 14, oversold: 30, overbought: 70, mode: reversion }
+```
 
 **Adding your own indicator** is the intended path — this is where your
 "FSVO"/custom indicator goes. Create a class in `polybot/signals/`, implement

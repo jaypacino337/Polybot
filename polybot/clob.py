@@ -114,6 +114,36 @@ class ClobClient:
             log.error("Order failed (%s): %s", intent, exc)
             return OrderResult(success=False, order_id=None, dry_run=False, detail=str(exc))
 
+    def sell(self, token_id: str, price: float, size_shares: float) -> OrderResult:
+        """Place a limit SELL to close a position of `token_id` at `price`.
+
+        In dry-run, logs and returns without touching the network.
+        """
+        intent = f"SELL {size_shares:.4f} shares of {token_id} @ {price:.3f}"
+        if self.secrets.dry_run:
+            log.info("[DRY-RUN] would place: %s", intent)
+            return OrderResult(success=True, order_id=None, dry_run=True, detail=intent)
+
+        try:
+            from py_clob_client.clob_types import OrderArgs, OrderType
+            from py_clob_client.order_builder.constants import SELL
+
+            client = self._ensure_client()
+            args = OrderArgs(
+                token_id=token_id,
+                price=round(float(price), 3),
+                size=round(float(size_shares), 2),
+                side=SELL,
+            )
+            signed = client.create_order(args)
+            resp = client.post_order(signed, OrderType.GTC)
+            oid = resp.get("orderID") or resp.get("orderId") if isinstance(resp, dict) else None
+            log.info("Placed live SELL %s (%s)", oid, intent)
+            return OrderResult(success=True, order_id=oid, dry_run=False, detail=str(resp))
+        except Exception as exc:  # noqa: BLE001
+            log.error("Sell failed (%s): %s", intent, exc)
+            return OrderResult(success=False, order_id=None, dry_run=False, detail=str(exc))
+
     def cancel_all(self) -> None:
         if self.secrets.dry_run:
             log.info("[DRY-RUN] would cancel all open orders")

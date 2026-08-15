@@ -12,11 +12,17 @@ from typing import Any
 
 from .base import Decision, Signal, SignalContext
 from .manual import ManualSignal
+from .momentum import MomentumSignal
 from .moving_average import MovingAverageSignal
+from .rsi import RSISignal
+from .threshold import ThresholdSignal
 
 _REGISTRY: dict[str, type[Signal]] = {
     "manual": ManualSignal,
     "moving_average": MovingAverageSignal,
+    "rsi": RSISignal,
+    "momentum": MomentumSignal,
+    "threshold": ThresholdSignal,
 }
 
 
@@ -43,6 +49,9 @@ __all__ = [
     "SignalContext",
     "ManualSignal",
     "MovingAverageSignal",
+    "RSISignal",
+    "MomentumSignal",
+    "ThresholdSignal",
     "build_signal",
     "register_signal",
 ]

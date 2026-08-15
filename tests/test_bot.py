@@ -8,12 +8,17 @@ class FakeClob:
     def __init__(self, yes=0.5, no=0.5):
         self.yes, self.no = yes, no
         self.orders = []
+        self.sells = []
 
     def get_midpoint(self, token_id):
         return self.yes if token_id == "YES" else self.no
 
     def buy(self, token_id, price, size):
         self.orders.append((token_id, price, size))
+        return OrderResult(success=True, order_id="fake", dry_run=True)
+
+    def sell(self, token_id, price, size):
+        self.sells.append((token_id, price, size))
         return OrderResult(success=True, order_id="fake", dry_run=True)
 
 
@@ -73,3 +78,19 @@ def test_price_above_max_is_skipped():
     bot = _bot(market, clob)
     bot.tick()
     assert clob.orders == []
+
+
+def test_long_position_closes_when_signal_flips():
+    clob = FakeClob(yes=0.4, no=0.6)
+    market = _market("long")
+    bot = _bot(market, clob)
+    bot.tick()                       # signal LONG -> buy YES
+    assert len(clob.orders) == 1
+    # flip the manual signal to FLAT and tick again -> should sell to close
+    bot._markets[0].signal._decision = __import__(
+        "polybot.signals.base", fromlist=["Decision"]
+    ).Decision.FLAT
+    bot.tick()
+    assert len(clob.sells) == 1
+    assert clob.sells[0][0] == "YES"
+    assert bot._markets[0].long_open is False

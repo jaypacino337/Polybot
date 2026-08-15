@@ -31,17 +31,19 @@ markets:
       max_price: 0.95          # max price per NO share
 
     # --- Signal: decides LONG / SHORT / FLAT -------------------------------
-    # Swap `type` for any signal registered in polybot/signals/.
-    #   manual         -> you drive it; whatever `decision` says below.
-    #   moving_average -> sample momentum indicator (fast MA vs slow MA).
-    # Later, drop your own indicator in here.
+    # Swap `type` for any signal registered in polybot/signals/. When the
+    # signal flips away from a side, the bot closes that position.
+    #   manual         -> decision: long|short|flat   (you drive it)
+    #   threshold      -> lower: 0.35, upper: 0.65     (raw YES price)
+    #   moving_average -> fast: 5, slow: 20            (MA crossover)
+    #   momentum       -> lookback: 10, threshold: 0.02
+    #   rsi            -> period: 14, oversold: 30, overbought: 70, mode: reversion
+    # Or drop your own indicator into polybot/signals/ and reference it here.
     signal:
       type: "moving_average"
       params:
         fast: 5                # fast moving-average window (samples)
         slow: 20               # slow moving-average window (samples)
-        # For type: manual, use instead:
-        # decision: "flat"     # one of: long / short / flat
 
 # Global risk guardrails (applied on top of per-market settings).
 risk:
