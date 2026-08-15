@@ -163,15 +163,23 @@ I'll wire that into the context.
 ## Finding a market (token ids)
 
 Polymarket markets are identified by two ERC-1155 **token ids** — one for YES,
-one for NO. You can find them via Polymarket's public API, e.g.:
+one for NO. The bot has a built-in finder so you don't have to hunt them down:
 
 ```bash
-curl "https://gamma-api.polymarket.com/markets?closed=false&limit=5"
+# List the most-traded open markets (optionally filter by text)
+python -m polybot.cli list-markets
+python -m polybot.cli list-markets -q "election" -n 10
+
+# Print a ready-to-paste config block for one market (use its slug)
+python -m polybot.cli list-markets --config-for will-it-rain-tomorrow
 ```
 
-Look for the `clobTokenIds` (or `tokens`) on a market — the two ids go into
-`yes_token_id` and `no_token_id` in `config.yaml`. (Tell me a market you care
-about and I can add a helper command that lists these for you.)
+The `--config-for` output drops straight under `markets:` in `config.yaml` with
+the correct `yes_token_id` / `no_token_id` already filled in — no manual copying
+of raw ids.
+
+> Uses Polymarket's public Gamma API (no key needed). If your network blocks it,
+> the same data is at `https://gamma-api.polymarket.com/markets`.
 
 ---
 

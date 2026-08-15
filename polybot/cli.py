@@ -111,6 +111,46 @@ def kill() -> None:
     click.secho("All bots turned OFF.", fg="red", bold=True)
 
 
+@cli.command("list-markets")
+@click.option("-q", "--query", default=None, help="Filter markets by text in the question.")
+@click.option("-n", "--limit", default=15, help="How many markets to show.")
+@click.option("--config-for", default=None, metavar="SLUG",
+              help="Print a ready-to-paste config.yaml block for this market slug.")
+def list_markets_cmd(query: str | None, limit: int, config_for: str | None) -> None:
+    """Find live Polymarket markets and their YES/NO token ids."""
+    from . import markets as mkt
+
+    try:
+        found = mkt.list_markets(query=query, limit=limit)
+    except Exception as exc:  # noqa: BLE001
+        click.secho(f"Could not reach Polymarket API: {exc}", fg="red")
+        return
+
+    if not found:
+        click.echo("No matching open markets found.")
+        return
+
+    if config_for:
+        for m in found:
+            if m.slug == config_for:
+                click.echo("# Paste this under `markets:` in config.yaml\n")
+                click.echo(m.config_block())
+                return
+        click.secho(f"Slug '{config_for}' not in results. Run without --config-for to list.", fg="yellow")
+        return
+
+    click.echo(f"{'VOLUME':>12}  SLUG / QUESTION")
+    click.echo("-" * 70)
+    for m in found:
+        click.echo(f"{m.volume:>12,.0f}  {m.slug}")
+        click.echo(f"{'':>12}  {m.question[:60]}")
+    click.echo(
+        "\nTo wire one up:\n"
+        "  python -m polybot.cli list-markets --config-for <slug>\n"
+        "then paste the block into config.yaml under `markets:`."
+    )
+
+
 @cli.command()
 def run() -> None:
     """Start the trading loop (Ctrl-C to stop)."""
