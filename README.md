@@ -1,5 +1,9 @@
 # Polybot — a toggleable Polymarket trading bot
 
+> 🌐 **Website:** a landing page for the project lives in [`site/index.html`](site/index.html) —
+> a single self-contained file (no build step). Open it locally in a browser, or serve the
+> `site/` folder with GitHub Pages (Settings → Pages → deploy from branch, `/site` folder).
+
 A small, safe-by-default bot that can automatically place orders on
 [Polymarket](https://polymarket.com) from a wallet you control. It has a
 **long bot** (buys the YES outcome) and a **short bot** (buys the NO outcome),

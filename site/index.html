@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polybot — Prediction markets, on autopilot</title>
+<meta name="description" content="Polybot is an open-source, toggleable trading bot for Polymarket. Flip a long bot, flip a short bot, plug in your own signal — dry-run by default, your keys stay yours.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF7EC;
+  --bg-soft:#FFEFD9;
+  --card:#FFFFFF;
+  --ink:#191322;
+  --ink-soft:#5C5468;
+  --line:#191322;
+  --green:#0BB35C;
+  --green-soft:#D8F7E4;
+  --red:#F04E4E;
+  --red-soft:#FFE3E0;
+  --yellow:#FFC93C;
+  --yellow-soft:#FFF1C9;
+  --purple:#8B5CF6;
+  --purple-soft:#EDE6FF;
+  --blue:#2F7DF6;
+  --blue-soft:#DEEBFF;
+  --term-bg:#191322;
+  --term-ink:#F4EFFF;
+  --shadow:0 0 0 2px var(--line), 6px 6px 0 0 var(--line);
+  --shadow-sm:0 0 0 2px var(--line), 4px 4px 0 0 var(--line);
+  --radius:22px;
+  --hl-h:44%; --hl-b:6%;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171220;
+    --bg-soft:#1F1830;
+    --card:#241C36;
+    --ink:#F6F1FF;
+    --ink-soft:#B4A9C9;
+    --line:#F6F1FF;
+    --green:#2FD67E;
+    --green-soft:#12351F;
+    --red:#FF6B6B;
+    --red-soft:#3D1A1A;
+    --yellow:#FFD25E;
+    --yellow-soft:#3A2F12;
+    --purple:#A98BFF;
+    --purple-soft:#2C2149;
+    --blue:#6FA5FF;
+    --blue-soft:#1B2A47;
+    --term-bg:#0E0A16;
+    --term-ink:#F4EFFF;
+    --shadow:0 0 0 2px var(--line), 6px 6px 0 0 rgba(0,0,0,.55);
+    --shadow-sm:0 0 0 2px var(--line), 4px 4px 0 0 rgba(0,0,0,.55);
+    --hl-h:88%; --hl-b:2%;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171220; --bg-soft:#1F1830; --card:#241C36; --ink:#F6F1FF; --ink-soft:#B4A9C9;
+  --line:#F6F1FF; --green:#2FD67E; --green-soft:#12351F; --red:#FF6B6B; --red-soft:#3D1A1A;
+  --yellow:#FFD25E; --yellow-soft:#3A2F12; --purple:#A98BFF; --purple-soft:#2C2149;
+  --blue:#6FA5FF; --blue-soft:#1B2A47; --term-bg:#0E0A16; --term-ink:#F4EFFF;
+  --shadow:0 0 0 2px var(--line), 6px 6px 0 0 rgba(0,0,0,.55);
+  --shadow-sm:0 0 0 2px var(--line), 4px 4px 0 0 rgba(0,0,0,.55);
+  --hl-h:88%; --hl-b:2%;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Bricolage Grotesque','Inter',sans-serif;line-height:1.08;letter-spacing:-.02em}
+code,pre,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 14px;border-radius:999px;
+  background:var(--card);box-shadow:0 0 0 2px var(--line);
+  font-weight:600;font-size:.82rem;
+}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot.g{background:var(--green)} .dot.r{background:var(--red)} .dot.y{background:var(--yellow)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1.02rem;
+  padding:15px 28px;border-radius:999px;text-decoration:none;cursor:pointer;border:none;
+  background:var(--ink);color:var(--bg);
+  box-shadow:0 0 0 2px var(--line),4px 4px 0 0 var(--line);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:0 0 0 2px var(--line),7px 7px 0 0 var(--line)}
+.btn:active{transform:translate(2px,2px);box-shadow:0 0 0 2px var(--line),1px 1px 0 0 var(--line)}
+.btn.alt{background:var(--yellow);color:#191322}
+.btn.ghost{background:var(--card);color:var(--ink)}
+
+/* ---------- nav ---------- */
+nav{
+  position:sticky;top:14px;z-index:50;margin-top:14px;
+}
+.navbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:var(--card);border-radius:999px;box-shadow:var(--shadow-sm);
+  padding:10px 12px 10px 20px;
+}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.25rem;text-decoration:none}
+.logo .mark{
+  width:34px;height:34px;border-radius:11px;background:var(--yellow);
+  display:grid;place-items:center;font-size:1.05rem;box-shadow:0 0 0 2px var(--line);
+}
+.navlinks{display:flex;gap:4px;align-items:center}
+.navlinks a{
+  text-decoration:none;font-weight:600;font-size:.92rem;color:var(--ink-soft);
+  padding:8px 14px;border-radius:999px;transition:background .15s,color .15s;
+}
+.navlinks a:hover{background:var(--bg-soft);color:var(--ink)}
+.nav-cta{display:flex;align-items:center;gap:8px}
+.btn.small{padding:10px 20px;font-size:.9rem}
+.theme-btn{
+  width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--bg-soft);box-shadow:0 0 0 2px var(--line);font-size:1rem;
+  display:grid;place-items:center;transition:transform .12s;
+  color:var(--ink);
+}
+.theme-btn:hover{transform:rotate(15deg) scale(1.06)}
+@media(max-width:860px){.navlinks{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding:76px 0 40px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+@media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:44px}}
+.hero h1{
+  font-size:clamp(2.7rem,6vw,4.4rem);font-weight:800;margin:20px 0 22px;
+}
+.hero h1 .hl{
+  position:relative;display:inline-block;white-space:nowrap;
+}
+.hero h1 .hl span{position:relative;z-index:1;color:#191322}
+.hero h1 .hl::before{
+  content:"";position:absolute;left:-6px;right:-6px;bottom:var(--hl-b);height:var(--hl-h);
+  background:var(--yellow);border-radius:8px;transform:rotate(-1.2deg);z-index:0;
+}
+.hero p.lede{font-size:1.16rem;color:var(--ink-soft);max-width:34rem;margin-bottom:30px}
+.hero p.lede strong{color:var(--ink)}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.hero-note{display:flex;gap:18px;flex-wrap:wrap;font-size:.86rem;font-weight:600;color:var(--ink-soft)}
+.hero-note span{display:inline-flex;align-items:center;gap:7px}
+
+/* terminal */
+.term-stage{position:relative}
+.term{
+  background:var(--term-bg);color:var(--term-ink);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;font-size:.83rem;
+  transform:rotate(1.4deg);position:relative;z-index:1;
+}
+.term-bar{display:flex;align-items:center;gap:8px;padding:13px 16px;background:rgba(255,255,255,.07)}
+.term-bar i{width:11px;height:11px;border-radius:50%;display:block}
+.term-bar i:nth-child(1){background:#FF5F57}.term-bar i:nth-child(2){background:#FEBC2E}.term-bar i:nth-child(3){background:#28C840}
+.term-bar em{font-style:normal;margin-left:auto;opacity:.55;font-size:.72rem;font-family:'JetBrains Mono',monospace}
+.term pre{padding:20px 20px 24px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+.t-dim{opacity:.5}.t-g{color:#4ADE80}.t-r{color:#FF8A8A}.t-y{color:#FFD25E}.t-b{color:#8AB8FF}.t-p{color:#C9A7FF}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.chip{
+  position:absolute;z-index:2;display:inline-flex;align-items:center;gap:9px;
+  background:var(--card);border-radius:16px;box-shadow:var(--shadow-sm);
+  padding:11px 16px;font-weight:700;font-size:.88rem;font-family:'Bricolage Grotesque',sans-serif;
+  animation:float 5s ease-in-out infinite;
+}
+.chip .mono{font-size:.8rem}
+.chip1{top:-26px;left:-18px;background:var(--green-soft);animation-delay:0s;transform:rotate(-4deg)}
+.chip2{bottom:-22px;right:-14px;background:var(--red-soft);animation-delay:1.2s;transform:rotate(3deg)}
+.chip3{top:38%;right:-34px;background:var(--yellow-soft);animation-delay:2.4s;transform:rotate(5deg)}
+@keyframes float{
+  0%,100%{translate:0 0}
+  50%{translate:0 -10px}
+}
+@media(max-width:960px){
+  .chip3{right:-8px}
+  .chip1{left:-4px}
+  .chip2{right:-4px}
+}
+
+/* ---------- ticker ---------- */
+.ticker-wrap{
+  margin:64px 0 0;padding:14px 0;background:var(--term-bg);color:var(--term-ink);
+  transform:rotate(-1deg) scale(1.02);overflow:hidden;
+  box-shadow:0 0 0 2px var(--line);
+}
+.ticker{display:flex;gap:44px;width:max-content;animation:scroll 36s linear infinite;font-family:'JetBrains Mono',monospace;font-size:.86rem;font-weight:600}
+.ticker-wrap:hover .ticker{animation-play-state:paused}
+.ticker span{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+.up{color:#4ADE80}.down{color:#FF8A8A}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ---------- sections ---------- */
+section{padding:92px 0}
+.kicker{
+  display:inline-block;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;
+  font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;
+  padding:7px 15px;border-radius:999px;box-shadow:0 0 0 2px var(--line);margin-bottom:18px;
+}
+.k-y{background:var(--yellow-soft)}.k-g{background:var(--green-soft)}.k-p{background:var(--purple-soft)}.k-b{background:var(--blue-soft)}.k-r{background:var(--red-soft)}
+h2{font-size:clamp(1.9rem,4vw,2.9rem);font-weight:800;margin-bottom:14px;max-width:26ch}
+.sub{color:var(--ink-soft);font-size:1.08rem;max-width:38rem;margin-bottom:44px}
+.sub strong{color:var(--ink)}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{
+  background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:28px 26px;position:relative;transition:transform .18s ease;
+}
+.step:hover{transform:translateY(-6px) rotate(-.6deg)}
+.step .num{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;
+  width:40px;height:40px;border-radius:13px;display:grid;place-items:center;
+  box-shadow:0 0 0 2px var(--line);margin-bottom:18px;
+}
+.step:nth-child(1) .num{background:var(--yellow)}
+.step:nth-child(2) .num{background:var(--purple-soft)}
+.step:nth-child(3) .num{background:var(--green-soft)}
+.step h3{font-size:1.3rem;margin-bottom:10px}
+.step p{color:var(--ink-soft);font-size:.96rem;margin-bottom:16px}
+.snippet{
+  background:var(--term-bg);color:var(--term-ink);border-radius:13px;
+  padding:12px 15px;font-size:.76rem;overflow-x:auto;white-space:nowrap;
+  box-shadow:0 0 0 2px var(--line);
+}
+.snippet .t-dim{opacity:.5}
+
+/* signals */
+.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media(max-width:960px){.sig-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.sig-grid{grid-template-columns:1fr}}
+.sig{
+  background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:26px 24px;transition:transform .18s ease;
+}
+.sig:hover{transform:translateY(-6px) rotate(.6deg)}
+.sig .icon{
+  width:48px;height:48px;border-radius:15px;display:grid;place-items:center;font-size:1.35rem;
+  box-shadow:0 0 0 2px var(--line);margin-bottom:16px;
+}
+.sig h3{font-size:1.14rem;margin-bottom:4px}
+.sig .tag{font-size:.74rem;font-weight:600;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;display:block;margin-bottom:10px}
+.sig p{color:var(--ink-soft);font-size:.92rem}
+.sig.byo{background:var(--ink);color:var(--bg)}
+.sig.byo h3,.sig.byo .tag{color:var(--bg)}
+.sig.byo p{color:color-mix(in srgb,var(--bg) 72%,transparent)}
+.sig.byo .snippet{box-shadow:0 0 0 2px var(--bg);margin-top:14px}
+
+/* toggle playground */
+.play{
+  background:var(--card);border-radius:28px;box-shadow:var(--shadow);
+  padding:36px;display:grid;grid-template-columns:.9fr 1.1fr;gap:36px;align-items:start;
+}
+@media(max-width:900px){.play{grid-template-columns:1fr;padding:26px}}
+.switch-row{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:18px 20px;border-radius:18px;box-shadow:0 0 0 2px var(--line);margin-bottom:16px;
+  background:var(--bg);
+}
+.switch-row .lab{display:flex;flex-direction:column;gap:2px}
+.switch-row .lab b{font-family:'Bricolage Grotesque',sans-serif;font-size:1.05rem}
+.switch-row .lab small{color:var(--ink-soft);font-weight:500}
+.sw{
+  --w:64px;position:relative;width:var(--w);height:36px;border-radius:999px;cursor:pointer;
+  background:var(--bg-soft);box-shadow:inset 0 0 0 2px var(--line);border:none;flex:none;
+  transition:background .2s;
+}
+.sw::after{
+  content:"";position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;
+  background:var(--card);box-shadow:0 0 0 2px var(--line);transition:left .2s ease;
+}
+.sw[aria-checked="true"]{background:var(--green)}
+.sw[aria-checked="true"]::after{left:calc(var(--w) - 32px)}
+.sw.red[aria-checked="true"]{background:var(--red)}
+.kill{
+  width:100%;margin-top:6px;padding:15px;border-radius:18px;border:none;cursor:pointer;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1rem;
+  background:var(--red);color:#fff;box-shadow:0 0 0 2px var(--line),4px 4px 0 0 var(--line);
+  transition:transform .12s, box-shadow .12s;
+}
+.kill:hover{transform:translate(-2px,-2px);box-shadow:0 0 0 2px var(--line),6px 6px 0 0 var(--line)}
+.kill:active{transform:translate(2px,2px);box-shadow:0 0 0 2px var(--line),1px 1px 0 0 var(--line)}
+.play .term{transform:none;font-size:.8rem}
+.play .term pre{height:296px;overflow-y:auto;padding-bottom:16px}
+.play-note{margin-top:14px;font-size:.85rem;color:var(--ink-soft)}
+
+/* safety */
+.safe-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+@media(max-width:760px){.safe-grid{grid-template-columns:1fr}}
+.safe{
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:30px 28px;
+  transition:transform .18s ease;background:var(--card);
+}
+.safe:hover{transform:translateY(-6px)}
+.safe:nth-child(1){background:var(--green-soft)}
+.safe:nth-child(2){background:var(--yellow-soft)}
+.safe:nth-child(3){background:var(--red-soft)}
+.safe:nth-child(4){background:var(--blue-soft)}
+.safe .icon{font-size:1.9rem;margin-bottom:14px;display:block}
+.safe h3{font-size:1.25rem;margin-bottom:8px}
+.safe p{color:var(--ink-soft);font-size:.95rem}
+.safe p code{background:var(--card);padding:2px 7px;border-radius:7px;font-size:.82em;box-shadow:0 0 0 1.5px var(--line)}
+
+/* faq */
+.faq{max-width:760px;margin:0 auto}
+details{
+  background:var(--card);border-radius:18px;box-shadow:var(--shadow-sm);
+  margin-bottom:14px;overflow:hidden;
+}
+summary{
+  cursor:pointer;list-style:none;padding:20px 24px;font-weight:700;
+  font-family:'Bricolage Grotesque',sans-serif;font-size:1.06rem;
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+}
+summary::-webkit-details-marker{display:none}
+summary::after{
+  content:"+";font-size:1.5rem;font-weight:400;flex:none;width:32px;height:32px;
+  display:grid;place-items:center;border-radius:50%;background:var(--bg-soft);
+  box-shadow:0 0 0 2px var(--line);transition:transform .2s;
+}
+details[open] summary::after{transform:rotate(45deg)}
+details .body{padding:0 24px 22px;color:var(--ink-soft);font-size:.96rem}
+details .body code{background:var(--bg-soft);padding:2px 7px;border-radius:7px;font-size:.85em}
+
+/* cta */
+.cta-card{
+  background:var(--yellow);color:#191322;border-radius:32px;
+  box-shadow:0 0 0 2px var(--line),8px 8px 0 0 var(--line);
+  padding:64px 40px;text-align:center;position:relative;overflow:hidden;
+}
+.cta-card h2{margin:0 auto 14px;max-width:20ch}
+.cta-card .sub{margin:0 auto 32px;color:#453A17}
+.install{
+  display:inline-flex;align-items:center;gap:14px;background:#191322;color:#F4EFFF;
+  border-radius:999px;padding:14px 20px;font-size:.88rem;margin-bottom:30px;max-width:100%;
+  box-shadow:0 0 0 2px var(--line);
+}
+.install code{overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.install button{
+  flex:none;border:none;cursor:pointer;background:var(--yellow);color:#191322;
+  font-weight:700;border-radius:999px;padding:7px 15px;font-size:.78rem;font-family:'Inter',sans-serif;
+  transition:transform .12s;
+}
+.install button:hover{transform:scale(1.05)}
+.confetti{position:absolute;font-size:1.6rem;opacity:.85;animation:float 6s ease-in-out infinite}
+
+/* footer */
+footer{padding:56px 0 40px;border-top:2px solid var(--line);margin-top:40px}
+.foot{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.foot .logo{font-size:1.1rem}
+.foot-links{display:flex;gap:22px;flex-wrap:wrap;font-size:.9rem;font-weight:600}
+.foot-links a{text-decoration:none;color:var(--ink-soft)}
+.foot-links a:hover{color:var(--ink)}
+.disclaimer{margin-top:26px;font-size:.8rem;color:var(--ink-soft);max-width:62rem}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .reveal{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="wrap">
+  <div class="navbar">
+    <a class="logo" href="#top"><span class="mark">🤖</span>Polybot</a>
+    <div class="navlinks">
+      <a href="#how">How it works</a>
+      <a href="#signals">Signals</a>
+      <a href="#toggles">Toggles</a>
+      <a href="#safety">Safety</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <button class="theme-btn" id="themeBtn" aria-label="Toggle dark mode">◐</button>
+      <a class="btn small" href="https://github.com/jaypacino337/polybot">★ GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap" id="top">
+  <div class="hero-grid">
+    <div>
+      <span class="pill"><span class="dot g"></span>Open source · Dry-run by default</span>
+      <h1>Prediction markets, <span class="hl"><span>on autopilot.</span></span></h1>
+      <p class="lede">Polybot is a <strong>toggleable trading bot for Polymarket</strong>. Flip a long bot, flip a short bot, plug in your own signal — and nothing spends a cent until <strong>you</strong> say so.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="https://github.com/jaypacino337/polybot">Get started →</a>
+        <a class="btn alt" href="#how">See how it works</a>
+      </div>
+      <div class="hero-note">
+        <span>🔑 Your keys never leave your machine</span>
+        <span>🧪 Paper-trades until you flip it live</span>
+      </div>
+    </div>
+
+    <div class="term-stage">
+      <div class="chip chip1"><span class="dot g"></span>LONG BOT · ON</div>
+      <div class="chip chip2"><span class="dot r"></span>SHORT BOT · OFF</div>
+      <div class="chip chip3">YES <span class="mono">0.62</span> ▲</div>
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><em>polybot — dry-run</em></div>
+        <pre><span class="t-dim">$</span> python -m polybot.cli <span class="t-y">status</span>
+<span class="t-dim">mode</span>      <span class="t-p">DRY-RUN (paper)</span>
+<span class="t-dim">wallet</span>    0x7f3…9c2 · <span class="t-b">1,250.00 USDC</span>
+<span class="t-dim">long bot</span>  <span class="t-g">● ON</span>    <span class="t-dim">short bot</span>  ○ OFF
+<span class="t-dim">signal</span>    rsi(14) → <span class="t-g">LONG</span>
+
+<span class="t-dim">$</span> python -m polybot.cli <span class="t-y">run</span>
+<span class="t-dim">[tick]</span>   YES <span class="t-g">0.62</span> / NO <span class="t-r">0.38</span>
+<span class="t-dim">[signal]</span> rsi → <span class="t-g">LONG</span>
+<span class="t-b">[DRY-RUN]</span> would place: BUY 25 YES @ 0.62<span class="cursor"></span></pre>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<section id="how" class="wrap">
+  <div class="reveal">
+    <span class="kicker k-y">How it works</span>
+    <h2>From zero to paper-trading in three commands.</h2>
+    <p class="sub">No exchange account, no API-key application forms. A wallet <strong>you control</strong>, a market you pick, and a switch you flip.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal">
+      <div class="num">1</div>
+      <h3>Make a wallet 👛</h3>
+      <p>Generate a fresh wallet locally. The private key goes into a git-ignored <code>.env</code> — it never touches the internet.</p>
+      <div class="snippet"><span class="t-dim">$</span> polybot generate-wallet</div>
+    </div>
+    <div class="step reveal">
+      <div class="num">2</div>
+      <h3>Pick a market 🎯</h3>
+      <p>Browse the most-traded Polymarket markets and get a ready-to-paste config block — token ids included.</p>
+      <div class="snippet"><span class="t-dim">$</span> polybot list-markets -q "election"</div>
+    </div>
+    <div class="step reveal">
+      <div class="num">3</div>
+      <h3>Flip it on 🚀</h3>
+      <p>Turn the long bot, the short bot, or both on — from a second terminal, while the loop is running. No restarts.</p>
+      <div class="snippet"><span class="t-dim">$</span> polybot on my-market both && polybot run</div>
+    </div>
+  </div>
+</section>
+
+<section id="signals" class="wrap">
+  <div class="reveal">
+    <span class="kicker k-p">Signal system</span>
+    <h2>Five indicators built in. Yours plugs in.</h2>
+    <p class="sub">Every tick, the signal says <strong>LONG</strong>, <strong>SHORT</strong>, or <strong>FLAT</strong>. Bots enter when it points their way — and <strong>exit automatically</strong> when it flips away.</p>
+  </div>
+  <div class="sig-grid">
+    <div class="sig reveal">
+      <div class="icon" style="background:var(--yellow-soft)">🎚️</div>
+      <h3>Threshold</h3><span class="tag">type: threshold</span>
+      <p>YES price above your upper bound → LONG. Below the lower → SHORT. Dead simple, surprisingly useful.</p>
+    </div>
+    <div class="sig reveal">
+      <div class="icon" style="background:var(--blue-soft)">📈</div>
+      <h3>Moving average</h3><span class="tag">type: moving_average</span>
+      <p>Fast MA crosses the slow MA → follow the trend. The classic crossover, on prediction markets.</p>
+    </div>
+    <div class="sig reveal">
+      <div class="icon" style="background:var(--green-soft)">⚡</div>
+      <h3>Momentum</h3><span class="tag">type: momentum</span>
+      <p>Price moved more than your threshold over the lookback window? Ride it — up means LONG, down means SHORT.</p>
+    </div>
+    <div class="sig reveal">
+      <div class="icon" style="background:var(--red-soft)">🌀</div>
+      <h3>RSI</h3><span class="tag">type: rsi</span>
+      <p>Oversold → LONG, overbought → SHORT. Mean-reversion by default, momentum mode if you flip it.</p>
+    </div>
+    <div class="sig reveal">
+      <div class="icon" style="background:var(--purple-soft)">🕹️</div>
+      <h3>Manual</h3><span class="tag">type: manual</span>
+      <p>You are the indicator. Set LONG, SHORT, or FLAT in config and watch the bots obey. Perfect for testing.</p>
+    </div>
+    <div class="sig byo reveal">
+      <div class="icon" style="background:var(--purple)">🧩</div>
+      <h3>Bring your own</h3><span class="tag">type: my_indicator</span>
+      <p>One class, one method, one registration line. Your alpha stays yours.</p>
+      <div class="snippet">def evaluate(self, ctx) -> Decision:</div>
+    </div>
+  </div>
+</section>
+
+<section id="toggles" class="wrap">
+  <div class="reveal">
+    <span class="kicker k-g">Try the toggles</span>
+    <h2>On. Off. On again. Live.</h2>
+    <p class="sub">Bot switches are read <strong>live</strong> from <code class="mono">runtime_state.json</code> — flip them from a second terminal while the loop runs. This demo works exactly the same way. Go on, flip something.</p>
+  </div>
+  <div class="play reveal">
+    <div>
+      <div class="switch-row">
+        <div class="lab"><b>Long bot</b><small>buys YES when signal says LONG</small></div>
+        <button class="sw" id="swLong" role="switch" aria-checked="true" aria-label="Toggle long bot"></button>
+      </div>
+      <div class="switch-row">
+        <div class="lab"><b>Short bot</b><small>buys NO when signal says SHORT</small></div>
+        <button class="sw" id="swShort" role="switch" aria-checked="false" aria-label="Toggle short bot"></button>
+      </div>
+      <button class="kill" id="killBtn">🛑 KILL — everything OFF</button>
+      <p class="play-note">The kill switch is your panic button: <span class="mono">polybot kill</span> stops all new entries instantly.</p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><em>polybot run — demo</em></div>
+      <pre id="demoLog"></pre>
+    </div>
+  </div>
+</section>
+
+<section id="safety" class="wrap">
+  <div class="reveal">
+    <span class="kicker k-r">Safety first</span>
+    <h2>Built to not lose your money by accident.</h2>
+    <p class="sub">Automated trading is risky enough on purpose. Polybot removes the <strong>by-accident</strong> part.</p>
+  </div>
+  <div class="safe-grid">
+    <div class="safe reveal">
+      <span class="icon">🧪</span>
+      <h3>Dry-run by default</h3>
+      <p>Fresh installs paper-trade. Real prices, real signals, zero real orders — until you set <code>POLYBOT_DRY_RUN=false</code> <em>and</em> fund the wallet. Two deliberate steps, no surprises.</p>
+    </div>
+    <div class="safe reveal">
+      <span class="icon">🔑</span>
+      <h3>Keys stay local</h3>
+      <p>Your private key lives in a git-ignored <code>.env</code> file, read only at runtime. Never committed, never uploaded, never asked for by anyone.</p>
+    </div>
+    <div class="safe reveal">
+      <span class="icon">🛑</span>
+      <h3>One-command kill switch</h3>
+      <p><code>polybot kill</code> flips every bot off instantly — from any terminal, while the loop is running. Panic has a button.</p>
+    </div>
+    <div class="safe reveal">
+      <span class="icon">🧰</span>
+      <h3>Tested fully offline</h3>
+      <p>The whole test suite runs against a fake exchange: no keys, no network, no orders. You can verify behavior before anything real is at stake.</p>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="wrap">
+  <div class="reveal" style="text-align:center">
+    <span class="kicker k-b">FAQ</span>
+    <h2 style="margin-inline:auto">Fair questions.</h2>
+    <p class="sub" style="margin-inline:auto">The honest answers, before you flip anything on.</p>
+  </div>
+  <div class="faq">
+    <details class="reveal" open>
+      <summary>Will this spend real money the moment I run it?</summary>
+      <div class="body">No. Polybot starts in <strong>DRY-RUN (paper) mode</strong>: it runs the full loop, logs exactly what it <em>would</em> do, and places no real orders. Live trading requires you to both set <code>POLYBOT_DRY_RUN=false</code> and fund the wallet with USDC on Polygon.</div>
+    </details>
+    <details class="reveal">
+      <summary>Where does my private key live?</summary>
+      <div class="body">In a local <code>.env</code> file that is git-ignored. You generate the key yourself with <code>polybot generate-wallet</code> (or paste in your own). The bot reads it only at runtime — never paste it into a chat, issue, or commit.</div>
+    </details>
+    <details class="reveal">
+      <summary>Can I add my own indicator?</summary>
+      <div class="body">Yes — that's the whole point of the signal system. Write a class with one <code>evaluate(ctx) → LONG/SHORT/FLAT</code> method, register it in one line, and reference it from <code>config.yaml</code>. The built-in indicators are examples to copy from.</div>
+    </details>
+    <details class="reveal">
+      <summary>Do the bots exit positions too?</summary>
+      <div class="body">Yes. When the signal flips away from a side, the bot sells the shares it bought — long and short bots both enter <em>and</em> exit automatically. Turning a bot off stops new entries.</div>
+    </details>
+    <details class="reveal">
+      <summary>Is any of this a profitable strategy?</summary>
+      <div class="body">No promises — the built-in signals are demos, not alpha. Prediction markets can go to zero, and you should only trade what you can afford to lose. Start in dry-run, stay skeptical.</div>
+    </details>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="cta-card reveal">
+    <span class="confetti" style="top:26px;left:8%">🎯</span>
+    <span class="confetti" style="top:30px;right:9%;animation-delay:1.5s">📈</span>
+    <span class="confetti" style="bottom:26px;left:14%;animation-delay:2.5s">⚡</span>
+    <span class="confetti" style="bottom:32px;right:16%;animation-delay:.8s">🤖</span>
+    <h2>Ready to flip it on?</h2>
+    <p class="sub">Clone it, paper-trade it, break it, fork it. It's yours.</p>
+    <div class="install">
+      <code id="installCmd">git clone https://github.com/jaypacino337/polybot && pip install -r requirements.txt</code>
+      <button id="copyBtn">Copy</button>
+    </div>
+    <div>
+      <a class="btn" href="https://github.com/jaypacino337/polybot">Star on GitHub ★</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <a class="logo" href="#top"><span class="mark">🤖</span>Polybot</a>
+      <div class="foot-links">
+        <a href="#how">How it works</a>
+        <a href="#signals">Signals</a>
+        <a href="#safety">Safety</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/jaypacino337/polybot">GitHub</a>
+        <a href="https://polymarket.com">Polymarket ↗</a>
+      </div>
+    </div>
+    <p class="disclaimer">⚠️ Trading is risky; prediction markets can go to 0. Only trade what you can afford to lose, start in dry-run, and check that automated trading and Polymarket are permitted in your jurisdiction. The built-in signals are demos, not financial advice. This software is provided as-is, with no warranty. Not affiliated with Polymarket.</p>
+  </div>
+</footer>
+
+<script>
+// ---------- theme toggle ----------
+(function(){
+  const root=document.documentElement,btn=document.getElementById('themeBtn');
+  let saved=null;
+  try{saved=localStorage.getItem('polybot-theme')}catch(e){}
+  if(saved==='dark'||saved==='light')root.dataset.theme=saved;
+  btn.addEventListener('click',()=>{
+    const dark=root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme=dark?'light':'dark';
+    try{localStorage.setItem('polybot-theme',root.dataset.theme)}catch(e){}
+  });
+})();
+
+// ---------- ticker ----------
+(function(){
+  const markets=[
+    ['Will it rain in NYC tomorrow?',0.62,1],['Fed cuts rates in November',0.81,1],
+    ['BTC above $100k on Dec 31',0.44,-1],['Chiefs win the Super Bowl',0.19,-1],
+    ['ETH flips BTC this year',0.03,-1],['US recession declared in 2026',0.27,1],
+    ['SpaceX Starship reaches orbit',0.91,1],['Oscars: sci-fi wins Best Picture',0.12,-1],
+  ];
+  const item=([q,p,d])=>`<span>🎯 ${q} <b class="${d>0?'up':'down'}">YES ${p.toFixed(2)} ${d>0?'▲':'▼'}</b></span>`;
+  const half=markets.map(item).join('');
+  document.getElementById('ticker').innerHTML=half+half;
+})();
+
+// ---------- reveal on scroll ----------
+(function(){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}
+  }),{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+})();
+
+// ---------- toggle playground ----------
+(function(){
+  const log=document.getElementById('demoLog');
+  const swL=document.getElementById('swLong'),swS=document.getElementById('swShort');
+  swS.classList.add('red');
+  const state={long:true,short:false};
+  let yes=0.62,t;
+
+  function line(html){
+    const div=document.createElement('div');
+    div.innerHTML=html;
+    log.appendChild(div);
+    while(log.children.length>60)log.removeChild(log.firstChild);
+    log.scrollTop=log.scrollHeight;
+  }
+  function fmt(x){return x.toFixed(2)}
+  function tick(){
+    yes=Math.min(.93,Math.max(.07,yes+(Math.random()-.5)*.06));
+    const no=1-yes;
+    const dec=yes>.6?'LONG':yes<.4?'SHORT':'FLAT';
+    const cls=dec==='LONG'?'t-g':dec==='SHORT'?'t-r':'t-dim';
+    line(`<span class="t-dim">[tick]</span>   YES <span class="t-g">${fmt(yes)}</span> / NO <span class="t-r">${fmt(no)}</span>`);
+    line(`<span class="t-dim">[signal]</span> threshold → <span class="${cls}">${dec}</span>`);
+    if(dec==='LONG')
+      line(state.long
+        ?`<span class="t-b">[DRY-RUN]</span> would place: BUY 25 YES @ ${fmt(yes)}`
+        :`<span class="t-dim">[skip]   long bot is OFF — no entry</span>`);
+    if(dec==='SHORT')
+      line(state.short
+        ?`<span class="t-b">[DRY-RUN]</span> would place: BUY 25 NO @ ${fmt(no)}`
+        :`<span class="t-dim">[skip]   short bot is OFF — no entry</span>`);
+  }
+  function announce(which,on){
+    line(`<span class="t-y">[control]</span> ${which} bot → ${on?'<span class="t-g">ON</span>':'<span class="t-r">OFF</span>'} <span class="t-dim">(runtime_state.json updated)</span>`);
+  }
+  swL.addEventListener('click',()=>{state.long=!state.long;swL.setAttribute('aria-checked',state.long);announce('long',state.long)});
+  swS.addEventListener('click',()=>{state.short=!state.short;swS.setAttribute('aria-checked',state.short);announce('short',state.short)});
+  document.getElementById('killBtn').addEventListener('click',()=>{
+    state.long=state.short=false;
+    swL.setAttribute('aria-checked','false');swS.setAttribute('aria-checked','false');
+    line(`<span class="t-r">[KILL]</span>    EMERGENCY — all bots OFF. No new entries.`);
+  });
+  line(`<span class="t-dim">$</span> python -m polybot.cli <span class="t-y">run</span>`);
+  line(`<span class="t-p">mode: DRY-RUN (paper)</span> — no real orders will be placed`);
+  // only animate when visible
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){if(!t)t=setInterval(tick,2200)}
+    else{clearInterval(t);t=null}
+  }),{threshold:.2});
+  io.observe(log);
+})();
+
+// ---------- copy install command ----------
+(function(){
+  const btn=document.getElementById('copyBtn');
+  btn.addEventListener('click',async()=>{
+    try{
+      await navigator.clipboard.writeText(document.getElementById('installCmd').textContent);
+      btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1600);
+    }catch(e){btn.textContent='Select & copy';setTimeout(()=>btn.textContent='Copy',1600)}
+  });
+})();
+</script>
+</body>
+</html>
