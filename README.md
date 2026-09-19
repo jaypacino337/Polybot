@@ -1,8 +1,18 @@
-# Polybot — a toggleable Polymarket trading bot
+# Robin Hood V2 🏹 — the people's trading bot (Polybot engine)
 
-> 🌐 **Website:** a landing page for the project lives in [`site/index.html`](site/index.html) —
-> a single self-contained file (no build step). Open it locally in a browser, or serve the
-> `site/` folder with GitHub Pages (Settings → Pages → deploy from branch, `/site` folder).
+**Robin Hood V2** is the brand; **Polybot** is the open-source engine
+underneath: a toggleable Polymarket trading bot.
+
+> 🌐 **Website:** [`site/index.html`](site/index.html) — a single self-contained
+> file, no build step. Deploys to Vercel in one click (see
+> [`DEPLOY.md`](DEPLOY.md)) or GitHub Pages.
+>
+> 🚀 **Deploying:** [`DEPLOY.md`](DEPLOY.md) — Vercel (site) + Railway/Docker
+> (bot), exact env vars, and the go-live checklist. No database needed.
+>
+> 🎨 **Brand / launch assets:** [`brand/`](brand/) — logo, banner, X bio,
+> pump.fun description, and the live thesis in
+> [`brand/COPY.md`](brand/COPY.md).
 
 A small, safe-by-default bot that can automatically place orders on
 [Polymarket](https://polymarket.com) from a wallet you control. It has a
