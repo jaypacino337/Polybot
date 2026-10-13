@@ -1,0 +1,70 @@
+<svg width="1500" height="500" viewBox="0 0 1500 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#123A23"/>
+      <stop offset="1" stop-color="#081C10"/>
+    </linearGradient>
+    <linearGradient id="hood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#37C275"/>
+      <stop offset="1" stop-color="#1E7A46"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#F5A623"/>
+      <stop offset="1" stop-color="#FFD25E"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1500" height="500" fill="url(#bg)"/>
+
+  <!-- big gold arrow rising across the right side -->
+  <g stroke="url(#gold)" stroke-width="30" stroke-linecap="round" fill="none" opacity=".95">
+    <path d="M 1195 455 L 1420 105"/>
+    <path d="M 1290 95 L 1424 99 L 1428 233"/>
+  </g>
+
+  <!-- faint oversized hood watermark on the far right -->
+  <g transform="translate(1150 90) scale(0.62)" opacity=".16">
+    <path d="M 520 128 C 420 138 330 205 285 315 C 245 415 240 540 275 640
+             C 320 765 420 840 500 852 C 580 840 680 765 725 640
+             C 760 540 755 415 715 315 C 682 232 620 172 560 148
+             C 585 128 610 116 640 118 C 610 100 560 104 520 128 Z"
+          fill="#37C275"/>
+  </g>
+
+  <!-- logo mark -->
+  <g transform="translate(70 100) scale(0.30)">
+    <rect width="1000" height="1000" rx="230" fill="#0E2B1A"/>
+    <rect x="14" y="14" width="972" height="972" rx="216" fill="none" stroke="#37C275" stroke-opacity=".35" stroke-width="10"/>
+    <g stroke="url(#gold)" stroke-width="44" stroke-linecap="round" fill="none">
+      <path d="M 165 815 L 815 235"/>
+      <path d="M 655 225 L 822 228 L 828 395"/>
+    </g>
+    <path d="M 520 128 C 420 138 330 205 285 315 C 245 415 240 540 275 640
+             C 320 765 420 840 500 852 C 580 840 680 765 725 640
+             C 760 540 755 415 715 315 C 682 232 620 172 560 148
+             C 585 128 610 116 640 118 C 610 100 560 104 520 128 Z"
+          fill="url(#hood)" stroke="#0A1F12" stroke-width="18"/>
+    <ellipse cx="500" cy="520" rx="185" ry="215" fill="#081A0F"/>
+    <rect x="365" y="445" width="270" height="150" rx="70" fill="#10131A" stroke="#2A2F3C" stroke-width="8"/>
+    <rect x="410" y="490" width="70" height="52" rx="26" fill="#FFD25E"/>
+    <rect x="520" y="490" width="70" height="52" rx="26" fill="#FFD25E"/>
+  </g>
+
+  <!-- wordmark -->
+  <g font-family="'Bricolage Grotesque',sans-serif">
+    <text x="430" y="218" font-size="104" font-weight="800" fill="#FFF7EC" letter-spacing="-2">ROBIN HOOD <tspan fill="#FFD25E">V2</tspan></text>
+    <text x="434" y="285" font-size="34" font-weight="600" fill="#B9E6CC">The people's trading bot — prediction markets on autopilot.</text>
+  </g>
+
+  <!-- chips -->
+  <g font-family="'JetBrains Mono',monospace" font-size="26" font-weight="600">
+    <rect x="434" y="330" rx="26" width="176" height="52" fill="#FFD25E"/>
+    <text x="522" y="364" text-anchor="middle" fill="#122A1B">$HOODV2</text>
+
+    <rect x="626" y="330" rx="26" width="222" height="52" fill="none" stroke="#37C275" stroke-width="3"/>
+    <text x="737" y="364" text-anchor="middle" fill="#B9E6CC">open source</text>
+
+    <rect x="864" y="330" rx="26" width="300" height="52" fill="none" stroke="#37C275" stroke-width="3"/>
+    <text x="1014" y="364" text-anchor="middle" fill="#B9E6CC">dry-run by default</text>
+  </g>
+</svg>

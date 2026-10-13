@@ -1,0 +1,19 @@
+# Railway deployment for the Polybot worker (the trading loop).
+# Import the repo at railway.app -> New Project -> Deploy from GitHub repo.
+# Railway auto-detects Python via requirements.txt (Nixpacks); this file
+# just pins the start command and restart policy.
+#
+# Required environment variables (Railway -> service -> Variables):
+#   POLYBOT_PRIVATE_KEY   your wallet key (NEVER commit this)
+#   POLYBOT_DRY_RUN       true (paper) until you're ready, then false
+# Optional:
+#   POLYBOT_FUNDER_ADDRESS, POLYBOT_SIGNATURE_TYPE, POLYBOT_CLOB_HOST,
+#   POLYBOT_CHAIN_ID, POLYBOT_CONFIG (path to an alternate config.yaml)
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "python -m polybot.cli run"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

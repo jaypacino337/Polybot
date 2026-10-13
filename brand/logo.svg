@@ -1,0 +1,58 @@
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17482C"/>
+      <stop offset="1" stop-color="#0B2416"/>
+    </linearGradient>
+    <linearGradient id="hood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#37C275"/>
+      <stop offset="1" stop-color="#1E7A46"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#F5A623"/>
+      <stop offset="1" stop-color="#FFD25E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- badge -->
+  <rect width="1000" height="1000" rx="230" fill="url(#bg)"/>
+  <rect x="14" y="14" width="972" height="972" rx="216" fill="none" stroke="#37C275" stroke-opacity=".28" stroke-width="8"/>
+
+  <!-- gold arrow rising behind the hood -->
+  <g stroke="url(#gold)" stroke-width="44" stroke-linecap="round" fill="none">
+    <path d="M 165 815 L 815 235"/>
+    <path d="M 655 225 L 822 228 L 828 395"/>
+  </g>
+
+  <!-- hood -->
+  <path d="M 520 128
+           C 420 138 330 205 285 315
+           C 245 415 240 540 275 640
+           C 320 765 420 840 500 852
+           C 580 840 680 765 725 640
+           C 760 540 755 415 715 315
+           C 682 232 620 172 560 148
+           C 585 128 610 116 640 118
+           C 610 100 560 104 520 128 Z"
+        fill="url(#hood)" stroke="#0A1F12" stroke-width="18"/>
+
+  <!-- hood opening (face shadow) -->
+  <ellipse cx="500" cy="520" rx="185" ry="215" fill="#081A0F"/>
+
+  <!-- robot visor -->
+  <rect x="365" y="445" width="270" height="150" rx="70" fill="#10131A" stroke="#2A2F3C" stroke-width="8"/>
+  <!-- eyes -->
+  <rect x="410" y="490" width="70" height="52" rx="26" fill="#FFD25E"/>
+  <rect x="520" y="490" width="70" height="52" rx="26" fill="#FFD25E"/>
+  <!-- eye glints -->
+  <rect x="422" y="499" width="20" height="14" rx="7" fill="#FFF6DC"/>
+  <rect x="532" y="499" width="20" height="14" rx="7" fill="#FFF6DC"/>
+  <!-- chin plate -->
+  <rect x="435" y="615" width="130" height="42" rx="21" fill="#122A1B" stroke="#1E7A46" stroke-width="8"/>
+
+  <!-- V2 tag -->
+  <g transform="rotate(-8 760 790)">
+    <rect x="672" y="732" width="176" height="116" rx="40" fill="url(#gold)" stroke="#0A1F12" stroke-width="14"/>
+    <text x="760" y="815" text-anchor="middle" font-family="'Bricolage Grotesque',sans-serif" font-weight="800" font-size="78" fill="#122A1B">V2</text>
+  </g>
+</svg>
